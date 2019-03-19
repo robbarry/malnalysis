@@ -2,6 +2,7 @@ import sys
 import json
 import time
 import config
+import argparse
 import datetime
 import requests
 from pymongo import MongoClient
@@ -10,17 +11,28 @@ REQUEST_URL = "https://api.domaintools.com/v1/"
 MONGO_HOST = config.mongo_host
 
 def main():	
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--limit", "-l", help="limit records to lookup", default=10000)
+	parser.add_argument("--verbose", "-v", help="verbose output", action="count")
+	parser.add_argument("--delay", "-d", help="delay between requests", default=1)
+	args = parser.parse_args()
+
 	client = MongoClient(MONGO_HOST)
 	db = client.malware
 	iocs_db = db.iocs
 	items = []
-	for item in iocs_db.find({"$and": [{"type": {"$in": ["domain", "email"]}}, {"analysis.domaintools": {"$exists": False}}]}):
+
+	for item in iocs_db.find({"$and": [{"type": {"$in": ["domain", "email"]}}, {"analysis.domaintools": {"$exists": False}}]}).limit(int(args.limit)):
 		items.append(item)
 
-	for item in items:
+	for i, item in enumerate(items):
 		try:
 			id = item["_id"]
 			ioc = item["ioc"]
+
+			if args.verbose:
+				config.log("({} / {}) {} [{}]".format(i + 1, len(items), item["ioc"], item["type"]))		
 			
 			parameters = []		
 			parameters.append("api_username={}".format(config.api_keys["domaintools"]["api_username"]))
@@ -41,8 +53,12 @@ def main():
 			except:
 				data = {}
 				pass
+
+			if args.verbose > 1:
+				print(data)
+				
 			iocs_db.update_one({"_id": id}, {"$set": {"analysis.domaintools": {"stamp": datetime.datetime.utcnow(), "data": data}}})
-			time.sleep(1)
+			time.sleep(args.delay)
 		except:
 			pass
 		

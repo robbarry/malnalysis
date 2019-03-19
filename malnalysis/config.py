@@ -1,4 +1,8 @@
 import json
+import datetime
+
+def log(msg):
+    print("{} - {}".format(str(datetime.datetime.now()), msg))    
 
 api_keys = {}
 settings = {}

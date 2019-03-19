@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import config
 import socket
 import datetime
 import argparse
@@ -8,7 +9,14 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 
 FILE_EXTENSIONS = [".doc", ".exe", ".docx", ".xlsx", ".xls", ".pdf", ".dll", ".dmg"]
-MONGO_HOST = 'mongodb://10.2.173.9/twitterdb'
+MONGO_HOST = config.mongo_host
+
+def get_tld(domain):
+    try:
+        tld = ".".join(tldextract.extract(domain)[1:3]).lower()
+        return tld
+    except:
+        return domain.lower()
 
 class IOC:
     def __init__(self, ioc_str, type = None):        
@@ -46,9 +54,11 @@ class IOC:
             if self.ioc_str.lower()[-len(ext):] == ext:
                 return "filename"
 
-        # Otherwise, if there are periods, call it a domain (ambiguity here)
+        # Otherwise, if there are periods, call it a host or a domain (ambiguity here)
         if "." in self.ioc_str:
-            return "domain"
+            if get_tld(self.ioc_str) == self.ioc_str:
+                return "domain"
+            return "host"
 
         if self.ioc_str[0:4].upper() == "CVE-":
             return "cve"

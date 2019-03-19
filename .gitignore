@@ -3,3 +3,4 @@ config.json
 iocs.txt
 __pycache__
 nohup.out
+malnalysis/tweaker.py
