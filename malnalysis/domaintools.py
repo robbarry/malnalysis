@@ -13,8 +13,11 @@ def main():
 	client = MongoClient(MONGO_HOST)
 	db = client.malware
 	iocs_db = db.iocs
-
+	items = []
 	for item in iocs_db.find({"$and": [{"type": {"$in": ["domain", "email"]}}, {"analysis.domaintools": {"$exists": False}}]}):
+		items.append(item)
+
+	for item in items:
 		try:
 			id = item["_id"]
 			ioc = item["ioc"]
@@ -39,8 +42,7 @@ def main():
 				data = {}
 				pass
 			iocs_db.update_one({"_id": id}, {"$set": {"analysis.domaintools": {"stamp": datetime.datetime.utcnow(), "data": data}}})
-
-			time.sleep(5)
+			time.sleep(1)
 		except:
 			pass
 		

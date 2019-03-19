@@ -15,7 +15,7 @@ def main():
 	iocs_db = db.iocs
 	updates = {}
 
-	for item in iocs_db.find({"$and": [{"type": {"$in": ["domain", "ip"]}}, {"analysis.farsight": {"$exists": False}}]}).limit(50):
+	for item in iocs_db.find({"$and": [{"type": {"$in": ["domain", "ip"]}}, {"analysis.farsight": {"$exists": False}}]}):
 		id = item["_id"]
 		ioc = item["ioc"]
 		if item["type"] == "domain":
